@@ -12,8 +12,10 @@ config = {
 
 from ._azure import AzureSpeech
 from ._google import GoogleSpeech
+from ._aws import AWSSpeech
 
 __all__ = [
     "AzureSpeech",
     "GoogleSpeech",
+    "AWSSpeech",
 ]
