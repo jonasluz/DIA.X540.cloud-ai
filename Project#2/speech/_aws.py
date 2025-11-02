@@ -1,14 +1,9 @@
-from . import config
+from . import config, play_audio
 
 from boto3 import Session
 from botocore.exceptions import BotoCoreError, ClientError
 
 from contextlib import closing
-import os
-import sys
-import subprocess
-from tempfile import gettempdir
-
 
 class AWSSpeech:
     """
@@ -51,12 +46,7 @@ class AWSSpeech:
 
             # Play the audio using the platform's default player
             if play:
-                if sys.platform == "win32":
-                    os.startfile(output_filepath)
-                else:
-                    # The following works on macOS and Linux. (Darwin = mac, xdg-open = linux).
-                    opener = "open" if sys.platform == "darwin" else "xdg-open"
-                    subprocess.call([opener, output_filepath])
+                play_audio(output_filepath)
         
         except (BotoCoreError, ClientError) as error:
             # The service returned an error
