@@ -12,7 +12,8 @@ class GoogleSpeech:
     Google Speech Synthesizer class.
     """
     known_voices = [
-        'Charon', 
+        'Achernar',
+        'Charon',
     ]
 
     def __init__(self, model: str = 'gemini-2.5-pro-tts', 
