@@ -40,4 +40,4 @@ A figura abaixo resume graficamente a distribuição de tempos por provedor por 
 
 ![Boxplots de CPU e Latência por provedor](figs/boxplots.png)
 
-Observação: Todos os resultados numéricos utilizados nesta seção foram extraídos da tabela `results` no banco `project-2.sqlite`, preenchida durante a execução do notebook.
+Observação: Todos os resultados da análise foram salvos na tabela `results` no banco `project-2.sqlite`, preenchida durante a execução do notebook.
