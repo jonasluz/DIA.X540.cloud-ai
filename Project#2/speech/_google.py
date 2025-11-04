@@ -55,4 +55,3 @@ class GoogleSpeech:
         # The response's audio_content is binary.
         with open(output_filepath, "wb") as out:
             out.write(response.audio_content)
-            print(f"Audio content written to file: {output_filepath}")

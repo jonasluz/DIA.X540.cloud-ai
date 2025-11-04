@@ -10,7 +10,7 @@ class AWSSpeech:
     AWS Speech Synthesis
     """
     def __init__(self, aws_profile: str = 'default', 
-                 voice_name: str = "JoannaCamila"):
+                 voice_name: str = "Camila"):
         # Create a client using the credentials and region defined in the [default]
         # section of the AWS credentials file (~/.aws/credentials).
         session = Session(profile_name=aws_profile)
@@ -18,7 +18,7 @@ class AWSSpeech:
         self._voice_name = voice_name
 
 
-    def synthesize_speech(self, text: str, 
+    def synthesize(self, text: str, 
                           output_filepath: str = "output.mp3", 
                           play: bool = False) -> bool | str:
         try:
