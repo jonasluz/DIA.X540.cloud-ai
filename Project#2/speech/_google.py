@@ -11,10 +11,12 @@ class GoogleSpeech:
     """
     Google Speech Synthesizer class.
     """
-    known_voices = [
-        'Achernar',
-        'Charon',
+    female_voices = [
+        'Achernar', 'Aoede', 'Autonoe', 'Callirrhoe', 'Despina', 'Erinome', 
+        'Gacrux', 'Kore', 'Laomedeia', 'Leda', 'Pulcherrima', 'Sulafat',
+        'Vindemiatrix', 'Zephyr'
     ]
+    male_voices = ['Charon']
 
     def __init__(self, model: str = 'gemini-2.5-pro-tts', 
                  voice_name: str = 'Charon', 
