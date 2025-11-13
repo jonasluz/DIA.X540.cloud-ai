@@ -17,3 +17,11 @@ ____
 ## Project #2 - Selected Cloud Service Comparison
 - **Specification:** [Google Presentation](https://docs.google.com/presentation/d/1p3TuMcKrhY4QGYSbf0cn0Cd3kdcL1pLtybFAYhWL7XE/edit?slide=id.g4f3c9c9561_0_334#slide=id.g4f3c9c9561_0_334)
 - **Submission:** [Report in Markdown](Project%232/REPORT.md) and [Jupyter Notebook](Project%232/Speech.ipynb)
+
+## Laboratory Practices
+
+### Lab#1 - Rest API Tutorial (Chalice)
+- **Tutorial:** [AWS Open Source tutorial](https://aws.github.io/chalice/tutorials/basicrestapi.html)
+- **Submission:** 
+    - **Source code:** [Python Chalice app](Lab.Chalice/hello-world)
+    - **Production:** [Lambda API](https://xe3fzlk5y6.execute-api.us-east-1.amazonaws.com/api/)
