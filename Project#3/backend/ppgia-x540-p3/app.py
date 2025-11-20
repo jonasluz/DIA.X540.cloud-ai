@@ -53,8 +53,8 @@ def session_init(user_id: str):
         "created_at": timestamp,
     }
 
-@app.route('/test/agent', methods=['GET'])
-def test_agent_get():
+@app.route('/agent/test', methods=['GET'])
+def agent_test():
     """
     Simple test endpoint to invoke Bedrock Agent (GET).
     """
@@ -62,4 +62,16 @@ def test_agent_get():
     reply = invoke_agent(prompt)
     return {"prompt": prompt, "reply": reply}
 
+@app.route('/agent/ask', methods=['POST'])
+def agent_ask():
+    """
+    Endpoint to ask a question to the Bedrock Agent (POST).
+    """
+    request = app.current_request
+    question = request.json_body.get("question", "")
+    if not question:
+        raise BadRequestError("Missing 'question' in request body.")
+
+    reply = invoke_agent(question)
+    return {"question": question, "reply": reply}
 # endregion Chalice app routes ------------------------------------------------
