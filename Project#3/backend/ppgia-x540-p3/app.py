@@ -10,9 +10,9 @@ import uuid
 
 from chalice import Chalice, BadRequestError
 
-import _chalice_config as config
-from _bedrock import invoke_agent
-from _dynamodb import sessions_table
+import chalicelib.chalice_config as config
+from chalicelib.bedrock import invoke_agent
+from chalicelib.dynamodb import sessions_table
 
 
 app = Chalice(app_name=config.APP_NAME)

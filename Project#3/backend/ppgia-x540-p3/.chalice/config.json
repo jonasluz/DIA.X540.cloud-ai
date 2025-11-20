@@ -6,7 +6,6 @@
       "api_gateway_stage": "api",
       "region": "us-east-1",
       "environment_variables": {
-        "AWS_REGION": "us-east-1",
         "BEDROCK_AGENT_ID": "G3YUTZUN0Z",
         "BEDROCK_AGENT_ALIAS_ID": "PTR8RQN2AH",
         "DYNAMODB_TABLE_NAME": "ppgia-x540-p3.db"

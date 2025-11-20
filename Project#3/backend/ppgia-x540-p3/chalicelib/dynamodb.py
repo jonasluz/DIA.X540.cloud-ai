@@ -4,12 +4,10 @@
 # Module for DynamoDB interactions.
 #
 ##
-import uuid
-
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-import _chalice_config as config
+import chalicelib.chalice_config as config
 
 
 _dynamodb = boto3.resource('dynamodb', region_name=config.REGION)
