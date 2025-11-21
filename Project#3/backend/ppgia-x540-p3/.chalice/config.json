@@ -12,7 +12,10 @@
         "POLLY_VOICE_ID": "Camila",
         "POLLY_ENGINE": "generative",
         "LANGUAGE": "pt-BR"
-      }
+      },
+      "binary_types": [
+        "audio/mpeg"
+      ]
     }
   }
 }

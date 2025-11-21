@@ -21,6 +21,7 @@ from chalicelib.polly import synthetize
 
 
 app = Chalice(app_name=config.APP_NAME)
+app.debug = True
 
 
 @app.route('/', methods=['GET'])
@@ -104,6 +105,7 @@ def tts_synthetize():
         status_code=200,
         headers={
             'Content-Type': 'audio/mpeg',
+            'Content-Length': str(len(audio)),
             'Content-Disposition': 'inline; filename="speech.mp3"'
             #'Content-Disposition': 'attachment; filename="speech.mp3"'
         },
