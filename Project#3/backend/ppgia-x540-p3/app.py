@@ -8,17 +8,21 @@
 import time
 import uuid
 
-from chalice import Chalice, BadRequestError
+from chalice.app import (
+    Chalice,
+    Response,
+    BadRequestError,
+)
 
-import chalicelib.chalice_config as config
+import chalicelib.config as config
 from chalicelib.bedrock import invoke_agent
 from chalicelib.dynamodb import sessions_table
+from chalicelib.polly import synthetize
 
 
 app = Chalice(app_name=config.APP_NAME)
 
 
-# region Chalice app routes --------------------------------------------------
 @app.route('/', methods=['GET'])
 def index_get():
     """
@@ -29,6 +33,7 @@ def index_get():
         "timestamp": int(time.time()),
     }
 
+# region Session Management Endpoints -----------------------------------------
 @app.route('/session/init/{user_id}', methods=['POST'])
 def session_init(user_id: str):
     """
@@ -52,7 +57,9 @@ def session_init(user_id: str):
         "session_id": session_id,
         "created_at": timestamp,
     }
+# endregion Session Management Endpoints --------------------------------------
 
+# region LLM agent Endpoints --------------------------------------------------
 @app.route('/agent/test', methods=['GET'])
 def agent_test():
     """
@@ -74,4 +81,39 @@ def agent_ask():
 
     reply = invoke_agent(question)
     return {"question": question, "reply": reply}
-# endregion Chalice app routes ------------------------------------------------
+# endregion LLM agent Endpoints ------------------------------------------------
+
+# region TTS Endpoints --------------------------------------------------------
+@app.route('/tts/synthetize', methods=['POST'], content_types=['application/json'])
+def tts_synthetize():
+    """
+    Endpoint to synthesize speech from text (POST).
+    """
+    request = app.current_request
+    text = request.json_body.get("text", "")
+    if not text:
+        raise BadRequestError("Missing 'text' in request body.")
+
+    try:
+        audio = synthetize(text)
+    except Exception as e:
+        raise BadRequestError(f"Error synthesizing speech: {str(e)}")
+
+    return Response(
+        body=audio, 
+        status_code=200,
+        headers={
+            'Content-Type': 'audio/mpeg',
+            'Content-Disposition': 'inline; filename="speech.mp3"'
+            #'Content-Disposition': 'attachment; filename="speech.mp3"'
+        },
+    )
+
+    # url = s3_client.generate_presigned_url(
+    #     'get_object',
+    #     Params={'Bucket': bucket, 'Key': key},
+    #     ExpiresIn=300  # 5 minutos
+    # )
+    # return {'audio_url': url}
+
+# endregion TTS Endpoints -----------------------------------------------------

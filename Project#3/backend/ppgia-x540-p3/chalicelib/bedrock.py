@@ -6,7 +6,7 @@
 ##
 import boto3
 
-import chalicelib.chalice_config as config
+import chalicelib.config as config
 
 
 # Bedrock Agent client setup

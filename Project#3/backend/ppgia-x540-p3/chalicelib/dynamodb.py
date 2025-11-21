@@ -7,7 +7,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-import chalicelib.chalice_config as config
+import chalicelib.config as config
 
 
 _dynamodb = boto3.resource('dynamodb', region_name=config.REGION)

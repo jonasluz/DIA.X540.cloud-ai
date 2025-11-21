@@ -18,6 +18,11 @@ AGENT_ALIAS_ID = os.environ.get("BEDROCK_AGENT_ALIAS_ID")
 # DynamoDB table name for session management
 DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME")
 
+# Polly voice
+POLLY_VOICE_ID = os.environ.get("POLLY_VOICE_ID", "Camila")
+POLLY_ENGINE = os.environ.get("POLLY_ENGINE", "neural")
+LANGUAGE = os.environ.get("LANGUAGE", "pt-BR")
+
 
 # Validate required configurations
 # Early check for required env.vars to avoid runtime errors.
@@ -37,4 +42,7 @@ __all__ = [
     "AGENT_ID",
     "AGENT_ALIAS_ID",
     "DYNAMODB_TABLE_NAME",
+    "POLLY_VOICE_ID",
+    "POLLY_ENGINE",
+    "LANGUAGE"
 ]
