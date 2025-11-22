@@ -34,6 +34,36 @@ def index_get():
         "timestamp": int(time.time()),
     }
 
+#region Interaction Endpoints -------------------------------------------------
+@app.route('/chat/{session_id}', methods=['POST', 'PUT'], 
+           content_types=['application/json'])
+def chat(session_id: str):
+    """
+    Endpoint to interact with a specific session (POST, PUT).
+    """
+    request = app.current_request
+    user_input = request.json_body.get("message", "")
+    if not user_input:
+        raise BadRequestError("Missing 'message' in request body.")
+    print(f"Received message for session {session_id}: {user_input}")
+
+    # Process user input and generate a response
+    response = process_user_input(session_id, user_input)
+    
+    return {
+        "session_id": session_id, 
+        "response": response
+    }
+
+def process_user_input(session_id: str, user_input: str) -> str:
+    """
+    Process the user input and generate a response.
+    This is a placeholder function and should be replaced with actual logic.
+    """
+    # For demonstration, we just echo the input
+    return f"Echo from session {session_id}: {user_input}"
+#endregion Interaction Endpoints ----------------------------------------------
+
 # region Session Management Endpoints -----------------------------------------
 @app.route('/session/init/{user_id}', methods=['POST'])
 def session_init(user_id: str):
@@ -57,6 +87,32 @@ def session_init(user_id: str):
     return {
         "session_id": session_id,
         "created_at": timestamp,
+    }
+
+
+@app.route('/session/close/{session_id}', methods=['DELETE'])
+def session_close(session_id: str):
+    """
+    Close an existing conversation session.
+    """
+    timestamp = int(time.time())
+
+    # Update the session status to 'closed' in DynamoDB
+    response = sessions_table.update_item(
+        Key={'conversation_id': session_id},
+        UpdateExpression="SET #s = :s, closed_at = :ca",
+        ExpressionAttributeNames={'#s': 'status'},
+        ExpressionAttributeValues={
+            ':s': 'closed',
+            ':ca': timestamp,
+        },
+        ReturnValues="UPDATED_NEW"
+    )
+
+    return {
+        "session_id": session_id,
+        "closed_at": timestamp,
+        "updated_attributes": response.get('Attributes', {})
     }
 # endregion Session Management Endpoints --------------------------------------
 
