@@ -22,7 +22,7 @@ class PollyException(Exception):
 def synthetize(
     text: str, 
     language: str = config.LANGUAGE, 
-    output_format: str = "mp3", 
+    output_format: str = "ogg_vorbis", 
     use_ssml: bool = False) -> bytes:
     """
     Synthetize the text using the given Polly voice in pt-BR.

@@ -37,7 +37,7 @@ def index_get():
 #region Interaction Endpoints -------------------------------------------------
 @app.route('/chat/{session_id}', methods=['POST', 'PUT'], 
            content_types=['application/json'])
-def chat(session_id: str):
+def chat(session_id: str) -> Response:
     """
     Endpoint to interact with a specific session (POST, PUT).
     """
@@ -48,13 +48,9 @@ def chat(session_id: str):
 
     # Process user input and generate a response
     response = process_user_input(session_id, user_input)
-    
-    return {
-        "session_id": session_id, 
-        "response": response
-    }
+    return response
 
-def process_user_input(session_id: str, user_input: str) -> str:
+def process_user_input(session_id: str, user_input: str) -> Response:
     """
     Process the user input and generate a response.
     """
@@ -63,9 +59,25 @@ def process_user_input(session_id: str, user_input: str) -> str:
     reply = invoke_agent(user_input, session_id=session_id)
 
     # 3. Generate speech using TTS (if needed)
+    try:
+        audio = synthetize(reply)
+    except Exception as e:
+        raise BadRequestError(f"Error synthesizing speech: {str(e)}")
+
+    response = Response(
+        body=audio, 
+        status_code=200,
+        headers={
+            'Content-Type': 'audio/ogg',
+            'Content-Length': str(len(audio)),
+            'Content-Disposition': 'inline; filename="speech.ogg"'
+            #'Content-Disposition': 'attachment; filename="speech.ogg"'
+        }
+    )
+
     # 4. Update session context in DynamoDB (if needed)
     # 5. Return the generated response
-    return reply
+    return response
 
 #endregion Interaction Endpoints ----------------------------------------------
 
@@ -121,7 +133,7 @@ def session_close(session_id: str):
     }
 # endregion Session Management Endpoints --------------------------------------
 
-# region LLM agent Endpoints --------------------------------------------------
+# region Service checking Endpoints -------------------------------------------
 @app.route('/agent/test', methods=['GET'])
 def agent_test():
     """
@@ -131,21 +143,7 @@ def agent_test():
     reply = invoke_agent(prompt)
     return {"prompt": prompt, "reply": reply}
 
-@app.route('/agent/ask', methods=['POST'])
-def agent_ask():
-    """
-    Endpoint to ask a question to the Bedrock Agent (POST).
-    """
-    request = app.current_request
-    question = request.json_body.get("question", "")
-    if not question:
-        raise BadRequestError("Missing 'question' in request body.")
 
-    reply = invoke_agent(question)
-    return {"question": question, "reply": reply}
-# endregion LLM agent Endpoints ------------------------------------------------
-
-# region TTS Endpoints --------------------------------------------------------
 @app.route('/tts/synthetize', methods=['POST'], content_types=['application/json'])
 def tts_synthetize():
     """
@@ -165,10 +163,10 @@ def tts_synthetize():
         body=audio, 
         status_code=200,
         headers={
-            'Content-Type': 'audio/mpeg',
+            'Content-Type': 'audio/ogg',
             'Content-Length': str(len(audio)),
-            'Content-Disposition': 'inline; filename="speech.mp3"'
-            #'Content-Disposition': 'attachment; filename="speech.mp3"'
+            'Content-Disposition': 'inline; filename="speech.ogg"'
+            #'Content-Disposition': 'attachment; filename="speech.ogg"'
         },
     )
 
@@ -179,4 +177,4 @@ def tts_synthetize():
     # )
     # return {'audio_url': url}
 
-# endregion TTS Endpoints -----------------------------------------------------
+# endregion Service checking Endpoints ----------------------------------------
