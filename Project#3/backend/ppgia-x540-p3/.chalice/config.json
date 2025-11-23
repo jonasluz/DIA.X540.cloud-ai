@@ -7,14 +7,16 @@
       "region": "us-east-1",
       "environment_variables": {
         "BEDROCK_AGENT_ID": "G3YUTZUN0Z",
-        "BEDROCK_AGENT_ALIAS_ID": "PTR8RQN2AH", 
+        "BEDROCK_AGENT_ALIAS_ID": "MJRWW3QD7G", 
         "DYNAMODB_TABLE_NAME": "ppgia-x540-p3.db",
         "POLLY_VOICE_ID": "Camila",
-        "POLLY_ENGINE": "generative",
-        "LANGUAGE": "pt-BR"
+        "POLLY_ENGINE": "neural",
+        "LANGUAGE": "pt-BR",
+        "S3_AUDIO_BUCKET": "ppgia-x540-p3-audio-dev"
       },
       "binary_types": [
-        "audio/mpeg"
+  "audio/mpeg",
+  "audio/ogg"
       ]
     }
   }

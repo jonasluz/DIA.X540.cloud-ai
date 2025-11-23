@@ -7,6 +7,8 @@
 ##
 import time
 import uuid
+import boto3
+from botocore.exceptions import ClientError
 
 from chalice.app import (
     Chalice,
@@ -18,6 +20,11 @@ import chalicelib.config as config
 from chalicelib.bedrock import invoke_agent
 from chalicelib.dynamodb import sessions_table
 from chalicelib.polly import synthetize
+from chalicelib.s3 import upload_audio_file
+
+# S3 client for audio storage
+# S3 client for audio storage (requires IAM: s3:PutObject, s3:GetObject on bucket ARN)
+s3_client = boto3.client('s3', region_name=config.REGION)
 
 
 app = Chalice(app_name=config.APP_NAME)
@@ -42,7 +49,8 @@ def chat(session_id: str) -> Response:
     Endpoint to interact with a specific session (POST, PUT).
     """
     request = app.current_request
-    user_input = request.json_body.get("message", "")
+    data = getattr(request, 'json_body', {}) or {}
+    user_input = data.get("message", "")
     if not user_input:
         raise BadRequestError("Missing 'message' in request body.")
 
@@ -51,9 +59,7 @@ def chat(session_id: str) -> Response:
     return response
 
 def process_user_input(session_id: str, user_input: str) -> Response:
-    """
-    Process the user input and generate a response.
-    """
+    """Process user input, invoke LLM, synthesize audio, store in S3 and return JSON with URL."""
     # 1. Retrieve session context from DynamoDB (if needed)
     # 2. Generate response using LLM agent
     reply = invoke_agent(user_input, session_id=session_id)
@@ -64,20 +70,25 @@ def process_user_input(session_id: str, user_input: str) -> Response:
     except Exception as e:
         raise BadRequestError(f"Error synthesizing speech: {str(e)}")
 
-    response = Response(
-        body=audio, 
-        status_code=200,
-        headers={
-            'Content-Type': 'audio/ogg',
-            'Content-Length': str(len(audio)),
-            'Content-Disposition': 'inline; filename="speech.ogg"'
-            #'Content-Disposition': 'attachment; filename="speech.ogg"'
-        }
-    )
+    # Upload audio to S3
+    filename = f"sessions/{session_id}/{uuid.uuid4()}.ogg"
+    try: 
+        s3_ps_url = upload_audio_file(filename, audio, 'audio/ogg')
+    except Exception as e:
+        raise BadRequestError(f"Error uploading audio to S3: {str(e)}")
 
-    # 4. Update session context in DynamoDB (if needed)
-    # 5. Return the generated response
-    return response
+    # Return JSON response (do not stream audio directly)
+    return Response(
+        body={
+            'session_id': session_id,
+            'message': reply,
+            'audio_url': s3_ps_url,
+            'audio_key': filename,
+            'expires_in': 300
+        },
+        status_code=200,
+        headers={'Content-Type': 'application/json'}
+    )
 
 #endregion Interaction Endpoints ----------------------------------------------
 
@@ -150,7 +161,8 @@ def tts_synthetize():
     Endpoint to synthesize speech from text (POST).
     """
     request = app.current_request
-    text = request.json_body.get("text", "")
+    data = getattr(request, 'json_body', {}) or {}
+    text = data.get("text", "")
     if not text:
         raise BadRequestError("Missing 'text' in request body.")
 

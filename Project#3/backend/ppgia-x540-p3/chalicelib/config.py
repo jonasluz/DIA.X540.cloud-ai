@@ -23,6 +23,9 @@ POLLY_VOICE_ID = os.environ.get("POLLY_VOICE_ID", "Camila")
 POLLY_ENGINE = os.environ.get("POLLY_ENGINE", "neural")
 LANGUAGE = os.environ.get("LANGUAGE", "pt-BR")
 
+# S3 bucket to store generated audio files
+S3_AUDIO_BUCKET = os.environ.get("S3_AUDIO_BUCKET")
+
 
 # Validate required configurations
 # Early check for required env.vars to avoid runtime errors.
@@ -34,6 +37,10 @@ elif not DYNAMODB_TABLE_NAME:
     raise RuntimeError(
         "The env.var DYNAMODB_TABLE_NAME is not set."
     )
+elif not S3_AUDIO_BUCKET:
+    raise RuntimeError(
+        "The env.var S3_AUDIO_BUCKET is not set."
+    )
 
 
 __all__ = [
@@ -44,5 +51,6 @@ __all__ = [
     "DYNAMODB_TABLE_NAME",
     "POLLY_VOICE_ID",
     "POLLY_ENGINE",
-    "LANGUAGE"
+    "LANGUAGE",
+    "S3_AUDIO_BUCKET"
 ]
