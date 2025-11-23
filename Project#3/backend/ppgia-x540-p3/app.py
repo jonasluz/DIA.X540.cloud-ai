@@ -27,7 +27,7 @@ app.debug = True
 @app.route('/', methods=['GET'])
 def index_get():
     """
-    Endpoint raiz simples de verificação (GET).
+    Root endpoint to check if the backend is running (GET).
     """
     return {
         "message": "PPGIA X540 Project 3 Backend is running.",
@@ -45,7 +45,6 @@ def chat(session_id: str):
     user_input = request.json_body.get("message", "")
     if not user_input:
         raise BadRequestError("Missing 'message' in request body.")
-    print(f"Received message for session {session_id}: {user_input}")
 
     # Process user input and generate a response
     response = process_user_input(session_id, user_input)
@@ -58,10 +57,16 @@ def chat(session_id: str):
 def process_user_input(session_id: str, user_input: str) -> str:
     """
     Process the user input and generate a response.
-    This is a placeholder function and should be replaced with actual logic.
     """
-    # For demonstration, we just echo the input
-    return f"Echo from session {session_id}: {user_input}"
+    # 1. Retrieve session context from DynamoDB (if needed)
+    # 2. Generate response using LLM agent
+    reply = invoke_agent(user_input, session_id=session_id)
+
+    # 3. Generate speech using TTS (if needed)
+    # 4. Update session context in DynamoDB (if needed)
+    # 5. Return the generated response
+    return reply
+
 #endregion Interaction Endpoints ----------------------------------------------
 
 # region Session Management Endpoints -----------------------------------------
