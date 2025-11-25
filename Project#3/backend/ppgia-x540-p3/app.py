@@ -7,8 +7,6 @@
 ##
 import time
 import uuid
-import boto3
-from botocore.exceptions import ClientError
 
 from chalice.app import (
     Chalice,
@@ -21,10 +19,10 @@ from chalicelib.bedrock import invoke_agent
 from chalicelib.dynamodb import sessions_table
 from chalicelib.polly import synthetize
 from chalicelib.s3 import upload_audio_file
-
-# S3 client for audio storage
-# S3 client for audio storage (requires IAM: s3:PutObject, s3:GetObject on bucket ARN)
-s3_client = boto3.client('s3', region_name=config.REGION)
+from chalicelib.trascribe import (
+    start_transcription_job,
+    get_transcription_result
+)
 
 
 app = Chalice(app_name=config.APP_NAME)
@@ -32,16 +30,77 @@ app.debug = True
 
 
 @app.route('/', methods=['GET'])
-def index_get():
+def index_get() -> Response:
     """
     Root endpoint to check if the backend is running (GET).
     """
-    return {
+    return Response(body={
         "message": "PPGIA X540 Project 3 Backend is running.",
         "timestamp": int(time.time()),
-    }
+    }, status_code=200, headers={'Content-Type': 'application/json'})
+
+
+#region Transcription Endpoints -----------------------------------------------
+#
+@app.route('/transcript', methods=['POST'], content_types=['multipart/form-data'])
+def transcript_audio() -> Response:
+    """
+    Endpoint to transcript an uploaded audio file (POST).
+    """
+    request = app.current_request
+    file_data = request.raw_body
+    if not file_data:
+        raise BadRequestError("Missing 'file' in form data.")
+
+    # Upload the audio file.
+    s3_key = f"uploads/{uuid.uuid4()}.wav"
+    try:
+        s3_url = upload_audio_file(s3_key, file_data, 
+                                   content_type='audio/wav',
+                                   presign=False)
+    except Exception as e:
+        raise BadRequestError(f"Error uploading file: {str(e)}")
+
+    # Start transcription job
+    job_name = f"transcription-{uuid.uuid4()}"
+    try:
+        job_id = start_transcription_job(s3_url, job_name, media_format='wav')
+    except Exception as e:
+        raise BadRequestError(f"Error starting transcription job: {str(e)}")
+    
+    return Response(
+        body={
+            "job_id": job_id,
+            "job_name": job_name
+        },
+        status_code=200,
+        headers={'Content-Type': 'application/json'}
+    )
+
+@app.route('/transcript/{job_id}', methods=['GET'])
+def get_transcript(job_id: str) -> Response:
+    """
+    Endpoint to get the transcription result for a given job ID (GET).
+    """
+    try:
+        status, transcript_text = get_transcription_result(job_id)
+    except Exception as e:
+        raise BadRequestError(f"Error retrieving transcription result: {str(e)}")
+
+    return Response(
+        body={
+            "job_id": job_id,
+            "status": status,
+            "transcript": transcript_text
+        },
+        status_code=200,
+        headers={'Content-Type': 'application/json'}
+    )
+#
+#endregion Transcription Endpoints --------------------------------------------
 
 #region Interaction Endpoints -------------------------------------------------
+#
 @app.route('/chat/{session_id}', methods=['POST', 'PUT'], 
            content_types=['application/json'])
 def chat(session_id: str) -> Response:
@@ -89,7 +148,6 @@ def process_user_input(session_id: str, user_input: str) -> Response:
         status_code=200,
         headers={'Content-Type': 'application/json'}
     )
-
 #endregion Interaction Endpoints ----------------------------------------------
 
 # region Session Management Endpoints -----------------------------------------
