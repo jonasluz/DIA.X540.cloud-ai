@@ -50,4 +50,44 @@ def upload_audio_file(file_name: str, data: bytes, content_type: str,
     return presigned_url
 
 
-__all__ = ['upload_audio_file']
+def create_presigned_upload_url(object_name: str, content_type: str, expiration: int = 300) -> str:
+    """
+    Generate a presigned URL to share an S3 object (PUT).
+    """
+    try:
+        response = _s3_client.generate_presigned_url('put_object',
+                                                    Params={'Bucket': config.S3_AUDIO_BUCKET,
+                                                            'Key': object_name,
+                                                            'ContentType': content_type},
+                                                    ExpiresIn=expiration)
+    except ClientError as e:
+        raise RuntimeError(
+            f"Failed to generate presigned URL: {e.response['Error'].get('Message', str(e))}") from e
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to generate presigned URL: {str(e)}") from e
+
+    return response
+
+
+def read_s3_file(s3_uri: str, text: bool = False) -> bytes | str:
+    """
+    Read a file from S3 given its S3 URI (s3://bucket/key).
+    """
+    try:
+        parts = s3_uri.replace("s3://", "").split("/", 1)
+        bucket = parts[0]
+        key = parts[1]
+        response = _s3_client.get_object(Bucket=bucket, Key=key)
+        if text:
+            return response['Body'].read().decode('utf-8')
+        return response['Body'].read()
+    except ClientError as e:
+        raise RuntimeError(
+            f"Failed to read file from S3: {e.response['Error'].get('Message', str(e))}") from e
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to read file from S3: {str(e)}") from e
+
+
+__all__ = ['upload_audio_file', 'read_s3_file', 'create_presigned_upload_url']

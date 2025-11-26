@@ -24,7 +24,7 @@ POLLY_ENGINE = os.environ.get("POLLY_ENGINE", "neural")
 LANGUAGE = os.environ.get("LANGUAGE", "pt-BR")
 
 # S3 bucket to store generated audio files
-S3_AUDIO_BUCKET = os.environ.get("S3_AUDIO_BUCKET")
+S3_AUDIO_BUCKET = os.environ.get("S3_AUDIO_BUCKET", "")
 
 
 # Validate required configurations

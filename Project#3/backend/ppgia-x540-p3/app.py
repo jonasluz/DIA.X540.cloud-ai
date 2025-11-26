@@ -13,13 +13,15 @@ from chalice.app import (
     Response,
     BadRequestError,
 )
+from email.parser import BytesParser
+from email.policy import default as email_default_policy
 
 import chalicelib.config as config
 from chalicelib.bedrock import invoke_agent
 from chalicelib.dynamodb import sessions_table
 from chalicelib.polly import synthetize
-from chalicelib.s3 import upload_audio_file
-from chalicelib.trascribe import (
+from chalicelib.s3 import upload_audio_file, create_presigned_upload_url
+from chalicelib.transcribe import (
     start_transcription_job,
     get_transcription_result
 )
@@ -42,54 +44,101 @@ def index_get() -> Response:
 
 #region Transcription Endpoints -----------------------------------------------
 #
-@app.route('/transcript', methods=['POST'], content_types=['multipart/form-data'])
-def transcript_audio() -> Response:
+@app.route('/transcript/get-upload-url/{session_id}', methods=['POST'])
+def get_upload_url(session_id: str) -> Response:
     """
-    Endpoint to transcript an uploaded audio file (POST).
+    Endpoint to get a presigned URL for uploading an audio file (POST).
     """
     request = app.current_request
-    file_data = request.raw_body
-    if not file_data:
-        raise BadRequestError("Missing 'file' in form data.")
-
-    # Upload the audio file.
-    s3_key = f"uploads/{uuid.uuid4()}.wav"
-    try:
-        s3_url = upload_audio_file(s3_key, file_data, 
-                                   content_type='audio/wav',
-                                   presign=False)
-    except Exception as e:
-        raise BadRequestError(f"Error uploading file: {str(e)}")
-
-    # Start transcription job
-    job_name = f"transcription-{uuid.uuid4()}"
-    try:
-        job_id = start_transcription_job(s3_url, job_name, media_format='wav')
-    except Exception as e:
-        raise BadRequestError(f"Error starting transcription job: {str(e)}")
+    filename = request.json_body.get('filename', 'upload.wav')
+    content_type = request.json_body.get('content_type', 'audio/wav')
+    
+    # Generate a unique key
+    ext = filename.split('.')[-1] if '.' in filename else 'wav'
+    s3_key = f"uploads/{uuid.uuid4()}.{ext}"
+    
+    # Generate the URL (using helper)
+    presigned_url = create_presigned_upload_url(s3_key, content_type)
     
     return Response(
         body={
-            "job_id": job_id,
-            "job_name": job_name
+            "upload_url": presigned_url,
+            "s3_key": s3_key
         },
         status_code=200,
         headers={'Content-Type': 'application/json'}
     )
 
-@app.route('/transcript/{job_id}', methods=['GET'])
-def get_transcript(job_id: str) -> Response:
+@app.route('/transcript/start', methods=['POST'])
+def start_transcription() -> Response:
+    """
+    Endpoint to manually start a transcription job for an S3 object (POST).
+    """
+    request = app.current_request
+    s3_key = request.json_body.get('s3_key', '')
+    if not s3_key:
+        raise BadRequestError("Missing 's3_key' in request body.")
+    bucket_name = config.S3_AUDIO_BUCKET
+    s3_uri = f"s3://{bucket_name}/{s3_key}"
+
+    # Generate a unique job name for AWS Transcribe
+    job_name = f"ppgia-x540-transcription-{uuid.uuid4()}"
+
+    try:
+        start_transcription_job(s3_uri, job_name)
+        app.log.info(f"Started transcription job '{job_name}' for S3 URI: '{s3_uri}'")
+        return Response(
+            body={
+                "job_name": job_name,
+                "s3_uri": s3_uri,
+                "status": "IN_PROGRESS",
+                "transcript": ""
+            },
+            status_code=200,
+            headers={'Content-Type': 'application/json'}
+        )
+    except Exception as e:
+        app.log.error(f"Failed to start transcription job for '{s3_uri}': {str(e)}")
+        raise BadRequestError(f"Failed to start transcription job: {str(e)}") from e
+
+@app.on_s3_event(
+    bucket=config.S3_AUDIO_BUCKET,
+    events=['s3:ObjectCreated:*'],
+    prefix='uploads/')
+def handle_new_audio_upload(event):
+    """
+    Triggered when a new audio file is uploaded to the 'uploads/' prefix in S3.
+    Initiates a transcription job for the uploaded file.
+    """
+    for record in event.records:
+        bucket_name = record.s3.bucket.name
+        s3_key = record.s3.object.key
+
+        s3_uri = f"s3://{bucket_name}/{s3_key}"
+        
+        # Generate a unique job name for AWS Transcribe
+        job_name = f"ppgia-x540-transcription-{uuid.uuid4()}"
+
+        try:
+            start_transcription_job(s3_uri, job_name)
+            app.log.info(f"Started transcription job '{job_name}' for S3 URI: '{s3_uri}'")
+        except Exception as e:
+            app.log.error(f"Failed to start transcription job for '{s3_uri}': {str(e)}")
+
+
+@app.route('/transcript/download/{job_name}', methods=['GET'])
+def get_transcript(job_name: str) -> Response:
     """
     Endpoint to get the transcription result for a given job ID (GET).
     """
     try:
-        status, transcript_text = get_transcription_result(job_id)
+        status, transcript_text = get_transcription_result(job_name)
     except Exception as e:
-        raise BadRequestError(f"Error retrieving transcription result: {str(e)}")
+        raise BadRequestError(f"Error retrieving transcription result: {str(e)}") from e
 
     return Response(
         body={
-            "job_id": job_id,
+            "job_name": job_name,
             "status": status,
             "transcript": transcript_text
         },

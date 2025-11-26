@@ -15,8 +15,9 @@
         "S3_AUDIO_BUCKET": "ppgia-x540-p3-audio-dev"
       },
       "binary_types": [
-  "audio/mpeg",
-  "audio/ogg"
+        "audio/mpeg",
+        "audio/ogg",
+        "multipart/form-data"
       ]
     }
   }
