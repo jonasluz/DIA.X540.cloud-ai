@@ -48,7 +48,7 @@ Além dos pré-requisitos originais do trabalho, adotamos, como desafio pessoal,
 - A aplicação deve ser multiplataforma e publicável como aplicativo móvel.
 - A interação da aplicação deve ocorrer em língua portuguesa, preferencialmente em português brasileiro. Isto objetiva avaliar a adequabilidade das soluções da AWS para o público brasileiro.
 
-Por questão de experiência de um dos membros da equipe e intenção de uso do aprendizado obtido neste trabalho em outro projeto, resolveu-se pelo desenvolvimento da aplicação cliente em [**Unity**](https://unity.com), com C#, que pode ser instalada [conforme roteiro de instalação](INSTALL).
+Por questão de experiência de um dos membros da equipe e intenção de uso do aprendizado obtido neste trabalho em outro projeto, resolveu-se pelo desenvolvimento da aplicação cliente em [**Unity**](https://unity.com), com C#, que pode ser instalada [conforme roteiro de instalação](https://github.com/jonasluz/DIA.X540.cloud-ai.p3-client/blob/main/README.md).
 
 ## Relatório de Implementação
 
