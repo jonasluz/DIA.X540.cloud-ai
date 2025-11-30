@@ -3,7 +3,7 @@
 # ----------------------------------
 # Chalice application for the PPGIA X540 Project 3 backend.
 # Author: Jonas de Araújo Luz Jr.
-# Date: 2024-06-15
+# Last Update: 2025-11-27
 ##
 import time
 import uuid
@@ -13,14 +13,16 @@ from chalice.app import (
     Response,
     BadRequestError,
 )
-from email.parser import BytesParser
-from email.policy import default as email_default_policy
-
 import chalicelib.config as config
 from chalicelib.bedrock import invoke_agent
-from chalicelib.dynamodb import sessions_table
+from chalicelib.dynamodb import (
+    create_session,
+    close_session
+)
 from chalicelib.polly import synthetize
-from chalicelib.s3 import upload_audio_file, create_presigned_upload_url
+from chalicelib.s3 import (
+    upload_audio_file, create_presigned_upload_url
+)
 from chalicelib.transcribe import (
     start_transcription_job,
     get_transcription_result
@@ -42,17 +44,50 @@ def index_get() -> Response:
     }, status_code=200, headers={'Content-Type': 'application/json'})
 
 
+#region Session Management Endpoints ------------------------------------------
+#
+@app.route('/session/init/{user_id}', methods=['POST'])
+def session_init(user_id: str):
+    """
+    Initialize a new conversation session.
+    Returns a new session ID.
+    """
+    # Stores the new session in DynamoDB
+    conversation_id, timestamp = create_session(user_id)
+    return {
+        "session_id": conversation_id,
+        "created_at": timestamp,
+    }
+
+
+@app.route('/session/close/{session_id}', methods=['DELETE'])
+def session_close(session_id: str):
+    """
+    Close an existing conversation session.
+    """
+    timestamp = int(time.time())
+
+    # Update the session status to 'closed' in DynamoDB
+    response = close_session(session_id)
+    return {
+        "session_id": session_id,
+        "closed_at": response
+    }
+#
+#endregion Session Management Endpoints ---------------------------------------
+
 #region Transcription Endpoints -----------------------------------------------
 #
-@app.route('/transcript/get-upload-url/{session_id}', methods=['POST'])
-def get_upload_url(session_id: str) -> Response:
+@app.route('/transcript/get-upload-url', methods=['POST'])
+def get_upload_url() -> Response:
     """
     Endpoint to get a presigned URL for uploading an audio file (POST).
     """
     request = app.current_request
-    filename = request.json_body.get('filename', 'upload.wav')
-    content_type = request.json_body.get('content_type', 'audio/wav')
-    
+    body = getattr(request, 'json_body', {})
+    filename = body.get('filename', 'upload.wav')
+    content_type = body.get('content_type', 'audio/wav')
+
     # Generate a unique key
     ext = filename.split('.')[-1] if '.' in filename else 'wav'
     s3_key = f"uploads/{uuid.uuid4()}.{ext}"
@@ -75,7 +110,8 @@ def start_transcription() -> Response:
     Endpoint to manually start a transcription job for an S3 object (POST).
     """
     request = app.current_request
-    s3_key = request.json_body.get('s3_key', '')
+    body = getattr(request, 'json_body', {})
+    s3_key = body.get('s3_key', '')
     if not s3_key:
         raise BadRequestError("Missing 's3_key' in request body.")
     bucket_name = config.S3_AUDIO_BUCKET
@@ -100,31 +136,6 @@ def start_transcription() -> Response:
     except Exception as e:
         app.log.error(f"Failed to start transcription job for '{s3_uri}': {str(e)}")
         raise BadRequestError(f"Failed to start transcription job: {str(e)}") from e
-
-@app.on_s3_event(
-    bucket=config.S3_AUDIO_BUCKET,
-    events=['s3:ObjectCreated:*'],
-    prefix='uploads/')
-def handle_new_audio_upload(event):
-    """
-    Triggered when a new audio file is uploaded to the 'uploads/' prefix in S3.
-    Initiates a transcription job for the uploaded file.
-    """
-    for record in event.records:
-        bucket_name = record.s3.bucket.name
-        s3_key = record.s3.object.key
-
-        s3_uri = f"s3://{bucket_name}/{s3_key}"
-        
-        # Generate a unique job name for AWS Transcribe
-        job_name = f"ppgia-x540-transcription-{uuid.uuid4()}"
-
-        try:
-            start_transcription_job(s3_uri, job_name)
-            app.log.info(f"Started transcription job '{job_name}' for S3 URI: '{s3_uri}'")
-        except Exception as e:
-            app.log.error(f"Failed to start transcription job for '{s3_uri}': {str(e)}")
-
 
 @app.route('/transcript/download/{job_name}', methods=['GET'])
 def get_transcript(job_name: str) -> Response:
@@ -157,7 +168,7 @@ def chat(session_id: str) -> Response:
     Endpoint to interact with a specific session (POST, PUT).
     """
     request = app.current_request
-    data = getattr(request, 'json_body', {}) or {}
+    data = getattr(request, 'json_body', {})
     user_input = data.get("message", "")
     if not user_input:
         raise BadRequestError("Missing 'message' in request body.")
@@ -169,6 +180,8 @@ def chat(session_id: str) -> Response:
 def process_user_input(session_id: str, user_input: str) -> Response:
     """Process user input, invoke LLM, synthesize audio, store in S3 and return JSON with URL."""
     # 1. Retrieve session context from DynamoDB (if needed)
+    pass
+
     # 2. Generate response using LLM agent
     reply = invoke_agent(user_input, session_id=session_id)
 
@@ -197,61 +210,11 @@ def process_user_input(session_id: str, user_input: str) -> Response:
         status_code=200,
         headers={'Content-Type': 'application/json'}
     )
+#
 #endregion Interaction Endpoints ----------------------------------------------
 
-# region Session Management Endpoints -----------------------------------------
-@app.route('/session/init/{user_id}', methods=['POST'])
-def session_init(user_id: str):
-    """
-    Initialize a new conversation session.
-    Returns a new session ID.
-    """
-    conversation_id = session_id = str(uuid.uuid4())
-    timestamp = int(time.time())
-
-    # Stores the new session in DynamoDB
-    sessions_table.put_item(
-        Item={
-            'conversation_id': conversation_id,
-            'user_id': user_id,
-            'created_at': timestamp,
-            'status': 'active',
-        }
-    )
-    
-    return {
-        "session_id": session_id,
-        "created_at": timestamp,
-    }
-
-
-@app.route('/session/close/{session_id}', methods=['DELETE'])
-def session_close(session_id: str):
-    """
-    Close an existing conversation session.
-    """
-    timestamp = int(time.time())
-
-    # Update the session status to 'closed' in DynamoDB
-    response = sessions_table.update_item(
-        Key={'conversation_id': session_id},
-        UpdateExpression="SET #s = :s, closed_at = :ca",
-        ExpressionAttributeNames={'#s': 'status'},
-        ExpressionAttributeValues={
-            ':s': 'closed',
-            ':ca': timestamp,
-        },
-        ReturnValues="UPDATED_NEW"
-    )
-
-    return {
-        "session_id": session_id,
-        "closed_at": timestamp,
-        "updated_attributes": response.get('Attributes', {})
-    }
-# endregion Session Management Endpoints --------------------------------------
-
 # region Service checking Endpoints -------------------------------------------
+#
 @app.route('/agent/test', methods=['GET'])
 def agent_test():
     """
@@ -288,12 +251,5 @@ def tts_synthetize():
             #'Content-Disposition': 'attachment; filename="speech.ogg"'
         },
     )
-
-    # url = s3_client.generate_presigned_url(
-    #     'get_object',
-    #     Params={'Bucket': bucket, 'Key': key},
-    #     ExpiresIn=300  # 5 minutos
-    # )
-    # return {'audio_url': url}
-
-# endregion Service checking Endpoints ----------------------------------------
+#
+#endregion Service checking Endpoints ----------------------------------------

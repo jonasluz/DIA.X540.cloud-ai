@@ -11,7 +11,7 @@ import chalicelib.config as config
 from chalicelib.s3 import read_s3_file
 
 
-transcribe = boto3.client('transcribe')
+_transcribe = boto3.client('transcribe')
 
 def start_transcription_job(s3_audio_file: str, 
                             job_name: str,
@@ -21,7 +21,7 @@ def start_transcription_job(s3_audio_file: str,
     Start a transcription job for the given audio file.
     """
     try:
-        response = transcribe.start_transcription_job(
+        response = _transcribe.start_transcription_job(
             TranscriptionJobName=job_name,
             Media={'MediaFileUri': s3_audio_file},
             MediaFormat=media_format,
@@ -40,7 +40,7 @@ def get_transcription_result(job_name: str) -> tuple[str, str]:
     Retrieve the transcription result text for a completed job.
     """
     try:
-        result = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+        result = _transcribe.get_transcription_job(TranscriptionJobName=job_name)
         status = result['TranscriptionJob']['TranscriptionJobStatus']
         match status:
             case 'FAILED':
