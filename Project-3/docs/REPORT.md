@@ -84,7 +84,7 @@ Nas seções seguintes, o fluxo de operação e cada endpoint de função lambda
 
 ### Arquitetura da Aplicação Cliente
 
-A aplicação cliente, que faz a interface com o usuário, foi desenvolvida com a **Unity Engine**, que utiliza .NET com C#, favorecendo a portabilidade da aplicação. Foram publicadas versões para Windows, MacOS, Linux e Android.
+A aplicação cliente, que faz a interface com o usuário, foi desenvolvida com a **Unity Engine**, que utiliza .NET com C#, favorecendo a portabilidade da aplicação. Foram publicadas versões para Windows, MacOS, Linux e Android, que podem ser baixadas na [página de release da aplicação cliente](https://github.com/jonasluz/DIA.X540.cloud-ai.p3-client/releases/tag/deploy%2FPPGIA-X540-P3-MVP-3.20251130).
 
 O diagrama seguinte apresenta a arquitetura da aplicação cliente.
 
