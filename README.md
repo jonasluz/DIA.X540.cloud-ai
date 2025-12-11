@@ -31,6 +31,11 @@
 - **Specification:** [Google Presentation](https://docs.google.com/presentation/d/1aCRwXR_RJWYxJPozsZGzhI7_JufEhBAAAqKJHjDshPg/edit?slide=id.p#slide=id.p)
 - **Submission:** [Submission Report](Project-3/docs/REPORT.md) and [Application Download](https://github.com/jonasluz/DIA.X540.cloud-ai.p3-client/blob/main/README.md)
 
+### Project #4 - Wordpress in the Cloud Capacity Planning
+
+- **Specification:** [Google Presentation](https://docs.google.com/document/d/13QL64Om-XBFfEqDDyZp8czq-vdWQG-e4mvE3uwRpi-c/edit?tab=t.0#heading=h.qgh1cb786lww)
+- **Submission:** *WIP*
+
 ### Laboratory Activities
 
 #### Lab#1 - Rest API Tutorial (Chalice)
