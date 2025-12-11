@@ -1,0 +1,239 @@
+WSTemplateFormatVersion: "2010-09-09"
+Description: "Arena Benchmark: VPC, ALB, DB c5.large (v9.0 - Fix Missing Output)"
+Parameters:
+ KeyName:
+   Description: Nome do KeyPair para SSH
+   Type: AWS::EC2::KeyPair::KeyName
+   Default: chave-professor
+ LatestAmiId:
+   Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+   Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+
+
+Resources:
+ LabVPC:
+   Type: AWS::EC2::VPC
+   Properties:
+     {
+       CidrBlock: 10.0.0.0/16,
+       EnableDnsSupport: true,
+       EnableDnsHostnames: true,
+       Tags: [{ Key: Name, Value: LabVPC }],
+     }
+ InternetGateway:
+   Type: AWS::EC2::InternetGateway
+ VPCGatewayAttachment:
+   Type: AWS::EC2::VPCGatewayAttachment
+   Properties: { VpcId: !Ref LabVPC, InternetGatewayId: !Ref InternetGateway }
+ PublicSubnet1:
+   Type: AWS::EC2::Subnet
+   Properties:
+     {
+       VpcId: !Ref LabVPC,
+       CidrBlock: 10.0.1.0/24,
+       AvailabilityZone: us-east-1a,
+       MapPublicIpOnLaunch: true,
+     }
+ PublicSubnet2:
+   Type: AWS::EC2::Subnet
+   Properties:
+     {
+       VpcId: !Ref LabVPC,
+       CidrBlock: 10.0.2.0/24,
+       AvailabilityZone: us-east-1b,
+       MapPublicIpOnLaunch: true,
+     }
+ PublicRouteTable:
+   Type: AWS::EC2::RouteTable
+   Properties: { VpcId: !Ref LabVPC }
+ DefaultRoute:
+   Type: AWS::EC2::Route
+   Properties:
+     {
+       RouteTableId: !Ref PublicRouteTable,
+       DestinationCidrBlock: 0.0.0.0/0,
+       GatewayId: !Ref InternetGateway,
+     }
+ Subnet1RouteTableAssociation:
+   Type: AWS::EC2::SubnetRouteTableAssociation
+   Properties:
+     { SubnetId: !Ref PublicSubnet1, RouteTableId: !Ref PublicRouteTable }
+ Subnet2RouteTableAssociation:
+   Type: AWS::EC2::SubnetRouteTableAssociation
+   Properties:
+     { SubnetId: !Ref PublicSubnet2, RouteTableId: !Ref PublicRouteTable }
+ LabSecurityGroup:
+   Type: AWS::EC2::SecurityGroup
+   Properties:
+     GroupDescription: Permite HTTP, SSH e MySQL
+     VpcId: !Ref LabVPC
+     SecurityGroupIngress:
+       - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+       - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: 0.0.0.0/0 }
+       - { IpProtocol: tcp, FromPort: 3306, ToPort: 3306, CidrIp: 0.0.0.0/0 }
+ MyALB:
+   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+   Properties:
+     Name: BenchmarkALB
+     Scheme: internet-facing
+     Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
+     SecurityGroups: [!Ref LabSecurityGroup]
+     Type: application
+ MyTargetGroup:
+   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+   Properties:
+     Name: BenchmarkTG
+     VpcId: !Ref LabVPC
+     Port: 80
+     Protocol: HTTP
+     HealthCheckPath: /
+     TargetType: instance
+     Matcher: { HttpCode: "200,301,302" }
+ ALBListener:
+   Type: AWS::ElasticLoadBalancingV2::Listener
+   Properties:
+     LoadBalancerArn: !Ref MyALB
+     Port: 80
+     Protocol: HTTP
+     DefaultActions: [{ Type: forward, TargetGroupArn: !Ref MyTargetGroup }]
+
+
+ AWSTemplateFormatVersion: "2010-09-09"
+Description: "Arena Benchmark: VPC, ALB, DB c5.large"
+Parameters:
+ KeyName:
+   Description: Nome do KeyPair existente na AWS
+   Type: AWS::EC2::KeyPair::KeyName
+ LatestAmiId:
+   Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+   Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+
+
+Resources:
+ LabVPC:
+   Type: AWS::EC2::VPC
+   Properties: { CidrBlock: 10.0.0.0/16, EnableDnsSupport: true, EnableDnsHostnames: true, Tags: [{ Key: Name, Value: LabVPC }] }
+ InternetGateway:
+   Type: AWS::EC2::InternetGateway
+ VPCGatewayAttachment:
+   Type: AWS::EC2::VPCGatewayAttachment
+   Properties: { VpcId: !Ref LabVPC, InternetGatewayId: !Ref InternetGateway }
+ PublicSubnet1:
+   Type: AWS::EC2::Subnet
+   Properties: { VpcId: !Ref LabVPC, CidrBlock: 10.0.1.0/24, AvailabilityZone: us-east-1a, MapPublicIpOnLaunch: true }
+ PublicSubnet2:
+   Type: AWS::EC2::Subnet
+   Properties: { VpcId: !Ref LabVPC, CidrBlock: 10.0.2.0/24, AvailabilityZone: us-east-1b, MapPublicIpOnLaunch: true }
+ PublicRouteTable:
+   Type: AWS::EC2::RouteTable
+   Properties: { VpcId: !Ref LabVPC }
+ DefaultRoute:
+   Type: AWS::EC2::Route
+   Properties: { RouteTableId: !Ref PublicRouteTable, DestinationCidrBlock: 0.0.0.0/0, GatewayId: !Ref InternetGateway }
+ Subnet1RouteTableAssociation:
+   Type: AWS::EC2::SubnetRouteTableAssociation
+   Properties: { SubnetId: !Ref PublicSubnet1, RouteTableId: !Ref PublicRouteTable }
+ Subnet2RouteTableAssociation:
+   Type: AWS::EC2::SubnetRouteTableAssociation
+   Properties: { SubnetId: !Ref PublicSubnet2, RouteTableId: !Ref PublicRouteTable }
+ LabSecurityGroup:
+   Type: AWS::EC2::SecurityGroup
+   Properties:
+     GroupDescription: Permite HTTP, SSH e MySQL
+     VpcId: !Ref LabVPC
+     SecurityGroupIngress:
+       - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+       - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: 0.0.0.0/0 }
+       - { IpProtocol: tcp, FromPort: 3306, ToPort: 3306, CidrIp: 0.0.0.0/0 }
+ MyALB:
+   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+   Properties:
+     Name: BenchmarkALB
+     Scheme: internet-facing
+     Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
+     SecurityGroups: [!Ref LabSecurityGroup]
+     Type: application
+ MyTargetGroup:
+   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+   Properties:
+     Name: BenchmarkTG
+     VpcId: !Ref LabVPC
+     Port: 80
+     Protocol: HTTP
+     HealthCheckPath: /
+     TargetType: instance
+     Matcher: { HttpCode: "200,301,302" }
+ ALBListener:
+   Type: AWS::ElasticLoadBalancingV2::Listener
+   Properties:
+     LoadBalancerArn: !Ref MyALB
+     Port: 80
+     Protocol: HTTP
+     DefaultActions: [{ Type: forward, TargetGroupArn: !Ref MyTargetGroup }]
+
+
+ DatabaseInstance:
+   Type: AWS::EC2::Instance
+   Properties:
+     InstanceType: c5.large
+     KeyName: !Ref KeyName
+     ImageId: !Ref LatestAmiId
+     SubnetId: !Ref PublicSubnet1
+     SecurityGroupIds: [!Ref LabSecurityGroup]
+     Tags: [{ Key: Name, Value: DB-Server-Fixed }]
+     UserData:
+       Fn::Base64: !Sub |
+         #!/bin/bash
+        # Instalação
+        yum update -y
+        amazon-linux-extras install -y php7.2
+        yum install -y mariadb-server php-cli php-xml mbstring
+
+
+        # Rede: Permite conexão externa
+        echo "[mysqld]" > /etc/my.cnf.d/z-open.cnf
+        echo "bind-address=0.0.0.0" >> /etc/my.cnf.d/z-open.cnf
+       
+        systemctl enable mariadb
+        systemctl start mariadb
+        sleep 5
+
+
+        # Setup SQL
+        mysqladmin -u root password 'rootpassword'
+        mysql -u root -prootpassword -e "CREATE DATABASE wordpress;"
+        mysql -u root -prootpassword -e "CREATE USER 'wp_user'@'%' IDENTIFIED BY 'wp_pass';"
+        mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wp_user'@'%';"
+        mysql -u root -prootpassword -e "FLUSH PRIVILEGES;"
+
+
+        # Instalação WP-CLI e Carga de Dados
+        curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+        chmod +x wp-cli.phar
+        mv wp-cli.phar /usr/local/bin/wp
+
+
+        cd /tmp
+        wp core download --allow-root
+        wp config create --dbname=wordpress --dbuser=root --dbpass=rootpassword --allow-root
+       
+        # Pega IP Público para configurar URL do site
+        PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+        wp core install --url="http://$PUBLIC_IP" --title="Arena DB" --admin_user="admin" --admin_password="password" --admin_email="a@a.com" --allow-root
+        wp site empty --yes --allow-root
+
+
+        # Gera 100 Posts
+        for i in {1..100}; do
+          wp post create --post_type=post --post_title="Post $i" --post_status=publish --post_name="post-$i" --post_content="Conteudo padronizado." --allow-root
+        done
+Outputs:
+ LoadBalancerDNS: { Value: !GetAtt MyALB.DNSName }
+ DatabasePublicIP: { Value: !GetAtt DatabaseInstance.PublicIp }
+ DatabasePrivateIP: { Value: !GetAtt DatabaseInstance.PrivateIp }
+ SecurityGroupID: { Value: !Ref LabSecurityGroup }
+ TargetGroupARN: { Value: !Ref MyTargetGroup }
+
+
+
+
