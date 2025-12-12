@@ -38,6 +38,6 @@ try {
 Write-Host ">>> Teste concluído. Relatório salvo em ./dados_stats.csv"
 
 # Copy CSV back
-& scp -i (Join-Path $scriptDir $KEY_FILE) -o StrictHostKeyChecking=no "ec2-user@${GEN_IP}:/home/ec2-user/dados_stats.csv" (Join-Path $scriptDir 'dados_stats.csv')
+& scp -i (Join-Path $scriptDir $KEY_FILE) -o StrictHostKeyChecking=no "ec2-user@${GEN_IP}:/home/ec2-user/dados_stats.csv" (Join-Path $scriptDir '../results' "${Users}_users_for_${Duration}_stats.csv")
 
 Write-Host 'Concluído.'
