@@ -80,16 +80,17 @@ $INSTANCE_IDS = aws ec2 run-instances `
     --output text
 
 Write-Host "Instâncias criadas: $INSTANCE_IDS"
+$ids = $INSTANCE_IDS -split '\s+' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
 Write-Host "Aguardando boot (30s)..."
 # Espera até status running
-aws ec2 wait instance-running --instance-ids $INSTANCE_IDS | Out-Null
+if ($ids.Count -gt 0) {
+    aws ec2 wait instance-running --instance-ids $ids | Out-Null
+}
 
 Write-Host "Registrando no Load Balancer..."
-$ids = $INSTANCE_IDS -split '\s+'
 foreach ($id in $ids) {
-    if (-not [string]::IsNullOrWhiteSpace($id)) {
-        aws elbv2 register-targets --target-group-arn "$TG_ARN" --targets Id=$id | Out-Null
-    }
+    aws elbv2 register-targets --target-group-arn "$TG_ARN" --targets Id=$id | Out-Null
 }
 
 Write-Host "========================================="

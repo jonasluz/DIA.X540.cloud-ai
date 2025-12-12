@@ -11,8 +11,10 @@ $scriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Remove-InstancesByTag {
     param([Parameter(Mandatory=$true)][string]$TagValue)
-    $ids = aws ec2 describe-instances --filters "Name=tag:Name,Values=$TagValue" "Name=instance-state-name,Values=running,pending,stopped" --query "Reservations[].Instances[].InstanceId" --output text
-    if (-not [string]::IsNullOrWhiteSpace($ids) -and $ids -ne 'None') {
+    $rawIds = aws ec2 describe-instances --filters "Name=tag:Name,Values=$TagValue" "Name=instance-state-name,Values=running,pending,stopped" --query "Reservations[].Instances[].InstanceId" --output text
+    $ids = $rawIds -split '\s+' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    if ($ids.Count -gt 0) {
         Write-Host "Terminando ${TagValue}: $ids"
         aws ec2 terminate-instances --instance-ids $ids --output text | Out-Null
         aws ec2 wait instance-terminated --instance-ids $ids | Out-Null
