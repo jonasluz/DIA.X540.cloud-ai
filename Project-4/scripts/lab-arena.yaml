@@ -1,16 +1,17 @@
-WSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: "2010-09-09"
 Description: "Arena Benchmark: VPC, ALB, DB c5.large (v9.0 - Fix Missing Output)"
 Parameters:
  KeyName:
    Description: Nome do KeyPair para SSH
    Type: AWS::EC2::KeyPair::KeyName
-   Default: chave-professor
+   Default: ppgia-dia-2025
  LatestAmiId:
    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 
 
 Resources:
+
  LabVPC:
    Type: AWS::EC2::VPC
    Properties:
@@ -20,11 +21,14 @@ Resources:
        EnableDnsHostnames: true,
        Tags: [{ Key: Name, Value: LabVPC }],
      }
+
  InternetGateway:
    Type: AWS::EC2::InternetGateway
+
  VPCGatewayAttachment:
    Type: AWS::EC2::VPCGatewayAttachment
    Properties: { VpcId: !Ref LabVPC, InternetGatewayId: !Ref InternetGateway }
+
  PublicSubnet1:
    Type: AWS::EC2::Subnet
    Properties:
@@ -34,6 +38,7 @@ Resources:
        AvailabilityZone: us-east-1a,
        MapPublicIpOnLaunch: true,
      }
+
  PublicSubnet2:
    Type: AWS::EC2::Subnet
    Properties:
@@ -43,6 +48,7 @@ Resources:
        AvailabilityZone: us-east-1b,
        MapPublicIpOnLaunch: true,
      }
+
  PublicRouteTable:
    Type: AWS::EC2::RouteTable
    Properties: { VpcId: !Ref LabVPC }
@@ -54,14 +60,17 @@ Resources:
        DestinationCidrBlock: 0.0.0.0/0,
        GatewayId: !Ref InternetGateway,
      }
+
  Subnet1RouteTableAssociation:
    Type: AWS::EC2::SubnetRouteTableAssociation
    Properties:
      { SubnetId: !Ref PublicSubnet1, RouteTableId: !Ref PublicRouteTable }
+
  Subnet2RouteTableAssociation:
    Type: AWS::EC2::SubnetRouteTableAssociation
    Properties:
      { SubnetId: !Ref PublicSubnet2, RouteTableId: !Ref PublicRouteTable }
+
  LabSecurityGroup:
    Type: AWS::EC2::SecurityGroup
    Properties:
@@ -71,6 +80,7 @@ Resources:
        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: 0.0.0.0/0 }
        - { IpProtocol: tcp, FromPort: 3306, ToPort: 3306, CidrIp: 0.0.0.0/0 }
+
  MyALB:
    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
    Properties:
@@ -79,6 +89,7 @@ Resources:
      Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
      SecurityGroups: [!Ref LabSecurityGroup]
      Type: application
+
  MyTargetGroup:
    Type: AWS::ElasticLoadBalancingV2::TargetGroup
    Properties:
@@ -89,6 +100,7 @@ Resources:
      HealthCheckPath: /
      TargetType: instance
      Matcher: { HttpCode: "200,301,302" }
+
  ALBListener:
    Type: AWS::ElasticLoadBalancingV2::Listener
    Properties:
@@ -98,7 +110,7 @@ Resources:
      DefaultActions: [{ Type: forward, TargetGroupArn: !Ref MyTargetGroup }]
 
 
- AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: "2010-09-09"
 Description: "Arena Benchmark: VPC, ALB, DB c5.large"
 Parameters:
  KeyName:
@@ -110,6 +122,7 @@ Parameters:
 
 
 Resources:
+
  LabVPC:
    Type: AWS::EC2::VPC
    Properties: { CidrBlock: 10.0.0.0/16, EnableDnsSupport: true, EnableDnsHostnames: true, Tags: [{ Key: Name, Value: LabVPC }] }
@@ -145,6 +158,7 @@ Resources:
        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: 0.0.0.0/0 }
        - { IpProtocol: tcp, FromPort: 3306, ToPort: 3306, CidrIp: 0.0.0.0/0 }
+ 
  MyALB:
    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
    Properties:
@@ -153,6 +167,7 @@ Resources:
      Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
      SecurityGroups: [!Ref LabSecurityGroup]
      Type: application
+ 
  MyTargetGroup:
    Type: AWS::ElasticLoadBalancingV2::TargetGroup
    Properties:
@@ -163,6 +178,7 @@ Resources:
      HealthCheckPath: /
      TargetType: instance
      Matcher: { HttpCode: "200,301,302" }
+ 
  ALBListener:
    Type: AWS::ElasticLoadBalancingV2::Listener
    Properties:
@@ -183,12 +199,11 @@ Resources:
      Tags: [{ Key: Name, Value: DB-Server-Fixed }]
      UserData:
        Fn::Base64: !Sub |
-         #!/bin/bash
+        #!/bin/bash
         # Instalação
         yum update -y
         amazon-linux-extras install -y php7.2
         yum install -y mariadb-server php-cli php-xml mbstring
-
 
         # Rede: Permite conexão externa
         echo "[mysqld]" > /etc/my.cnf.d/z-open.cnf
@@ -198,7 +213,6 @@ Resources:
         systemctl start mariadb
         sleep 5
 
-
         # Setup SQL
         mysqladmin -u root password 'rootpassword'
         mysql -u root -prootpassword -e "CREATE DATABASE wordpress;"
@@ -206,13 +220,10 @@ Resources:
         mysql -u root -prootpassword -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wp_user'@'%';"
         mysql -u root -prootpassword -e "FLUSH PRIVILEGES;"
 
-
         # Instalação WP-CLI e Carga de Dados
         curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         chmod +x wp-cli.phar
         mv wp-cli.phar /usr/local/bin/wp
-
-
         cd /tmp
         wp core download --allow-root
         wp config create --dbname=wordpress --dbuser=root --dbpass=rootpassword --allow-root
@@ -222,18 +233,15 @@ Resources:
         wp core install --url="http://$PUBLIC_IP" --title="Arena DB" --admin_user="admin" --admin_password="password" --admin_email="a@a.com" --allow-root
         wp site empty --yes --allow-root
 
-
         # Gera 100 Posts
         for i in {1..100}; do
           wp post create --post_type=post --post_title="Post $i" --post_status=publish --post_name="post-$i" --post_content="Conteudo padronizado." --allow-root
         done
+
 Outputs:
+
  LoadBalancerDNS: { Value: !GetAtt MyALB.DNSName }
  DatabasePublicIP: { Value: !GetAtt DatabaseInstance.PublicIp }
  DatabasePrivateIP: { Value: !GetAtt DatabaseInstance.PrivateIp }
  SecurityGroupID: { Value: !Ref LabSecurityGroup }
  TargetGroupARN: { Value: !Ref MyTargetGroup }
-
-
-
-
