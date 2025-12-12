@@ -1,14 +1,20 @@
+param(
+    [int]$InstanceCount = 1,
+    [string]$InstanceType = "t3.micro"
+)
+
 # deploy_app.ps1
 # PowerShell version of deploy_app.sh
 
 # --- CONFIGURAÇÃO ----------------
-$INSTANCE_COUNT = 1                     # Quantidade de instâncias (Escala Horizontal)
-$INSTANCE_TYPE  = "t3.micro"            # Tipo da instância (Escala Vertical)
 $KEY_NAME       = "ppgia-dia-2025"      # Chave SSH cadastrada na AWS
 $STACK_NAME     = "benchmark-arena"
 # ---------------------------------
 
 $ErrorActionPreference = 'Stop'
+
+Write-Host "DEBUG: InstanceCount=$InstanceCount"
+Write-Host "DEBUG: InstanceType=$InstanceType"
 
 function Get-Output {
     param(
@@ -60,11 +66,11 @@ $content = $content -replace 'PLACEHOLDER_DB_IP', [Regex]::Escape($DB_IP)
 $content = $content -replace 'PLACEHOLDER_LB_DNS', [Regex]::Escape($LB_DNS)
 Set-Content -Path $userDataFinal -Value $content -Encoding UTF8
 
-Write-Host "--- 3. Lançando Aplicação ($INSTANCE_COUNT x $INSTANCE_TYPE) ---"
+Write-Host "--- 3. Lançando Aplicação ($InstanceCount x $InstanceType) ---"
 $INSTANCE_IDS = aws ec2 run-instances `
     --image-id $AMI_ID `
-    --count $INSTANCE_COUNT `
-    --instance-type $INSTANCE_TYPE `
+    --count $InstanceCount `
+    --instance-type $InstanceType `
     --key-name $KEY_NAME `
     --security-group-ids $SG_ID `
     --subnet-id $SUBNET_ID `
