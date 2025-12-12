@@ -15,7 +15,9 @@ systemctl enable httpd
 
 
 # DICA: Adicione aqui comandos de otimização (ex: alterar httpd.conf)
-# echo "MaxRequestWorkers 150" >> /etc/httpd/conf/httpd.conf
+# Tunning do Apache (Prefork MPM) - Limitando para evitar OOM em t3.micro (1GB RAM)
+echo "ServerLimit 30" >> /etc/httpd/conf/httpd.conf
+echo "MaxRequestWorkers 30" >> /etc/httpd/conf/httpd.conf
 
 
 # --- 3. INSTALAÇÃO DO WORDPRESS (NÃO ALTERAR ABAIXO) ---
