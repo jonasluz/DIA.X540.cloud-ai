@@ -24,7 +24,7 @@
 ### Project #2 - Selected Cloud Service Comparison
 
 - **Specification:** [Google Presentation](https://docs.google.com/presentation/d/1p3TuMcKrhY4QGYSbf0cn0Cd3kdcL1pLtybFAYhWL7XE/edit?slide=id.g4f3c9c9561_0_334#slide=id.g4f3c9c9561_0_334)
-- **Submission:** [Report in Markdown](Project%232/REPORT.md) and [Jupyter Notebook](Project%232/Speech.ipynb)
+- **Submission:** [Submission Report](Project%232/REPORT.md) and [Jupyter Notebook](Project%232/Speech.ipynb)
 
 ### Project #3 - Chalice based AWS AI application
 
@@ -34,7 +34,7 @@
 ### Project #4 - Wordpress in the Cloud Capacity Planning
 
 - **Specification:** [Google Presentation](https://docs.google.com/document/d/13QL64Om-XBFfEqDDyZp8czq-vdWQG-e4mvE3uwRpi-c/edit?tab=t.0#heading=h.qgh1cb786lww)
-- **Submission:** *WIP*
+- **Submission:** [Submission Report](Project-4/docs/REPORT.md)
 
 ### Laboratory Activities
 
