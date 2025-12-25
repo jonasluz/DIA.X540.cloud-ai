@@ -1,11 +1,15 @@
 # deploy_generator.ps1
 # PowerShell version of deploy_generator.sh
+param(
+    [string]$StackName = "benchmark-arena",
+    [string]$KeyPairName = "ppgia-dia-2025"
+)
 
 $ErrorActionPreference = 'Stop'
 
 # --- CONFIG ---
-$STACK_NAME = 'benchmark-arena'
-$KEY_NAME   = 'ppgia-dia-2025' 
+$STACK_NAME = $StackName
+$KEY_NAME = $KeyPairName 
 
 Write-Host "--- Verificando gerador existente ---"
 $EXISTING_ID = aws ec2 describe-instances --filters "Name=tag:Name,Values=Load-Generator" "Name=instance-state-name,Values=running,pending" --query "Reservations[0].Instances[0].InstanceId" --output text
@@ -18,14 +22,14 @@ if (-not [string]::IsNullOrWhiteSpace($EXISTING_ID) -and $EXISTING_ID -ne 'None'
 }
 
 Write-Host "--- Provisionando novo gerador ---"
-$AMI_ID    = aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].Value' --output text
-$SG_ID     = aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='SecurityGroupID'].OutputValue" --output text
+$AMI_ID = aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].Value' --output text
+$SG_ID = aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='SecurityGroupID'].OutputValue" --output text
 $SUBNET_ID = aws cloudformation describe-stack-resources --stack-name $STACK_NAME --query "StackResources[?LogicalResourceId=='PublicSubnet1'].PhysicalResourceId" --output text
 
 # Generate user-data script that installs locust and helper wrapper
-$scriptDir      = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $userDataLocust = Join-Path $scriptDir 'data_scripts/user_data_locust.sh'
-$homeDir        = '/home/ec2-user'
+$homeDir = '/home/ec2-user'
 
 $ud = @'
 #!/bin/bash

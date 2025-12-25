@@ -2,15 +2,16 @@
 # PowerShell version of run_remote_test.sh
 
 param(
-    [Parameter(Mandatory=$true)][string]$Target,
-    [Parameter(Mandatory=$true)][int]$Users,
-    [string]$Duration = '2m'
+    [Parameter(Mandatory = $true)][string]$Target,
+    [Parameter(Mandatory = $true)][int]$Users,
+    [string]$Duration = '3m',
+    [string]$KeyFile = 'ppgia-dia-2025.pem'
 )
 
 $ErrorActionPreference = 'Stop'
 
-$KEY_FILE        = 'ppgia-dia-2025.pem'
-$scriptDir       = Split-Path -Parent $MyInvocation.MyCommand.Path
+$KEY_FILE = $KeyFile
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $generatorIpFile = Join-Path $scriptDir '.generator_ip'
 
 if (-not (Test-Path $generatorIpFile)) {
@@ -28,7 +29,8 @@ Write-Host ">>> Testando $Target com $Users users por $Duration..."
 # Ensure OpenSSH client is available on Windows
 try {
     $sshVersion = & ssh -V 2>&1
-} catch {
+}
+catch {
     Write-Error 'ssh client não encontrado no PATH. Instale OpenSSH Client no Windows.'
 }
 

@@ -1,14 +1,16 @@
 param(
     [int]$InstanceCount = 1,
-    [string]$InstanceType = "t3.micro"
+    [string]$InstanceType = "t3.micro",
+    [string]$StackName = "benchmark-arena",
+    [string]$KeyPairName = "ppgia-dia-2025"
 )
 
 # deploy_app.ps1
 # PowerShell version of deploy_app.sh
 
 # --- CONFIGURAÇÃO ----------------
-$KEY_NAME       = "ppgia-dia-2025"      # Chave SSH cadastrada na AWS
-$STACK_NAME     = "benchmark-arena"
+$KEY_NAME = $KeyPairName      # Chave SSH cadastrada na AWS
+$STACK_NAME = $StackName
 # ---------------------------------
 
 $ErrorActionPreference = 'Stop'
@@ -18,7 +20,7 @@ Write-Host "DEBUG: InstanceType=$InstanceType"
 
 function Get-Output {
     param(
-        [Parameter(Mandatory=$true)][string]$Key
+        [Parameter(Mandatory = $true)][string]$Key
     )
     try {
         $val = aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='$Key'].OutputValue" --output text 2>$null
@@ -26,21 +28,22 @@ function Get-Output {
             Write-Error "ERRO CRÍTICO: Output '$Key' não encontrado na stack '$STACK_NAME'."
         }
         return $val
-    } catch {
+    }
+    catch {
         throw $_
     }
 }
 
 Write-Host "--- 1. Lendo dados da Arena ---"
 $TG_ARN = Get-Output -Key 'TargetGroupARN'
-$DB_IP  = Get-Output -Key 'DatabasePrivateIP'
-$SG_ID  = Get-Output -Key 'SecurityGroupID'
+$DB_IP = Get-Output -Key 'DatabasePrivateIP'
+$SG_ID = Get-Output -Key 'SecurityGroupID'
 $LB_DNS = Get-Output -Key 'LoadBalancerDNS'
 
 # PublicSubnet1 PhysicalResourceId
 $SUBNET_ID = aws cloudformation describe-stack-resources --stack-name $STACK_NAME --query "StackResources[?LogicalResourceId=='PublicSubnet1'].PhysicalResourceId" --output text
 # Latest Amazon Linux 2 AMI (x86_64)
-$AMI_ID    = aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].Value' --output text
+$AMI_ID = aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].Value' --output text
 
 # --- Check de Idempotência ---
 $EXISTING_IDS = aws ec2 describe-instances --filters "Name=tag:Name,Values=App-Benchmark" "Name=instance-state-name,Values=running,pending" --query "Reservations[].Instances[].InstanceId" --output text
@@ -52,9 +55,9 @@ if (-not [string]::IsNullOrWhiteSpace($EXISTING_IDS) -and $EXISTING_IDS -ne 'Non
 
 Write-Host "--- 2. Preparando Configuração ---"
 # Injeta os valores reais no template de configuração
-$scriptDir        = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $userDataTemplate = Join-Path $scriptDir 'data_scripts/user_data_template.sh'
-$userDataFinal    = Join-Path $scriptDir 'data_scripts/user_data_final.sh'
+$userDataFinal = Join-Path $scriptDir 'data_scripts/user_data_final.sh'
 
 if (-not (Test-Path $userDataTemplate)) {
     throw "Arquivo de template não encontrado: $userDataTemplate"

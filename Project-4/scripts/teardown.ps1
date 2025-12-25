@@ -2,15 +2,16 @@
 # PowerShell version of teardown.sh
 
 param(
-    [Parameter(Mandatory=$true)][ValidateSet('app','generator','db','all')][string]$Target
+    [Parameter(Mandatory = $true)][ValidateSet('app', 'generator', 'db', 'all')][string]$Target,
+    [string]$StackName = 'benchmark-arena'
 )
 
 $ErrorActionPreference = 'Stop'
-$STACK_NAME = 'benchmark-arena'
-$scriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
+$STACK_NAME = $StackName
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Remove-InstancesByTag {
-    param([Parameter(Mandatory=$true)][string]$TagValue)
+    param([Parameter(Mandatory = $true)][string]$TagValue)
     $rawIds = aws ec2 describe-instances --filters "Name=tag:Name,Values=$TagValue" "Name=instance-state-name,Values=running,pending,stopped" --query "Reservations[].Instances[].InstanceId" --output text
     $ids = $rawIds -split '\s+' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
@@ -18,7 +19,8 @@ function Remove-InstancesByTag {
         Write-Host "Terminando ${TagValue}: $ids"
         aws ec2 terminate-instances --instance-ids $ids --output text | Out-Null
         aws ec2 wait instance-terminated --instance-ids $ids | Out-Null
-    } else {
+    }
+    else {
         Write-Host "Nenhum $TagValue encontrado."
     }
 }

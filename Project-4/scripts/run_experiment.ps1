@@ -1,9 +1,10 @@
 param(
-    [Parameter(Mandatory=$true)][int]$InstanceCount,
-    [Parameter(Mandatory=$true)][string]$InstanceType,
-    [Parameter(Mandatory=$true)][int]$Users,
-    [string]$Duration = '2m',
-    [Parameter(Mandatory=$true)][string]$ExperimentName
+    [Parameter(Mandatory = $true)][int]$InstanceCount = 1,
+    [Parameter(Mandatory = $true)][string]$InstanceType = 't3.micro',
+    [Parameter(Mandatory = $true)][int]$Users = 100,
+    [string]$Duration = '3m',
+    [Parameter(Mandatory = $true)][string]$ExperimentName,
+    [Parameter(Mandatory = $true)][string]$StackName
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,15 +18,14 @@ Write-Host "==========================================================="
 
 # 1. Teardown existing app
 Write-Host ">>> Step 1: Teardown..."
-& (Join-Path $scriptDir 'teardown.ps1') app
+& (Join-Path $scriptDir 'teardown.ps1') app -StackName $StackName
 
 # 2. Deploy new config
 Write-Host ">>> Step 2: Deploying..."
-& (Join-Path $scriptDir 'deploy_app.ps1') -InstanceCount $InstanceCount -InstanceType $InstanceType
+& (Join-Path $scriptDir 'deploy_app.ps1') -InstanceCount $InstanceCount -InstanceType $InstanceType -StackName $StackName
 
 # 3. Get LB DNS (Re-fetch to be safe)
-$STACK_NAME = "benchmark-arena"
-$LB_DNS = aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text
+$LB_DNS = aws cloudformation describe-stacks --stack-name $StackName --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text
 if ([string]::IsNullOrWhiteSpace($LB_DNS) -or $LB_DNS -eq 'None') {
     throw "Could not retrieve Load Balancer DNS."
 }
@@ -46,7 +46,8 @@ while ($retryCount -lt $maxRetries) {
             $healthy = $true
             break
         }
-    } catch {
+    }
+    catch {
         Write-Host "Waiting for app to be ready... ($($retryCount + 1)/$maxRetries)"
     }
     Start-Sleep -Seconds 10
@@ -64,12 +65,13 @@ Write-Host ">>> Step 4: Running Load Test..."
 # 6. Save Results
 Write-Host ">>> Step 5: Saving Results..."
 $defaultResultFile = Join-Path $scriptDir '../results' "${Users}_users_for_${Duration}_stats.csv"
-$newResultFile     = Join-Path $scriptDir '../results' "${ExperimentName}_stats.csv"
+$newResultFile = Join-Path $scriptDir '../results' "${ExperimentName}_stats.csv"
 
 if (Test-Path $defaultResultFile) {
     Move-Item -Path $defaultResultFile -Destination $newResultFile -Force
     Write-Host "Results saved to: $newResultFile"
-} else {
+}
+else {
     Write-Error "Result file not found: $defaultResultFile"
 }
 
