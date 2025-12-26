@@ -8,9 +8,9 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Define Experiments
 $experiments = @(
-    @{ Name = 'm5-large_250u_5i'; Count = 5; Type = 'm5.large'; Users = 250; Duration = '3m' },
-    @{ Name = 'm5-xlarge_250u_2i'; Count = 2; Type = 'm5.xlarge'; Users = 250; Duration = '3m' },
-    @{ Name = 'm5-2xlarge_250u_1i'; Count = 1; Type = 'm5.2xlarge'; Users = 250; Duration = '3m' }
+    @{ Name = 'm5-large_100u_5i'; Count = 5; Type = 'm5.large'; Users = 100; Duration = '3m' },
+    @{ Name = 'm5-xlarge_100u_2i'; Count = 2; Type = 'm5.xlarge'; Users = 100; Duration = '3m' },
+    @{ Name = 'm5-2xlarge_100u_1i'; Count = 1; Type = 'm5.2xlarge'; Users = 100; Duration = '3m' }
 )
 
 foreach ($exp in $experiments) {
@@ -26,5 +26,8 @@ foreach ($exp in $experiments) {
         -Duration $exp.Duration `
         -ExperimentName $exp.Name
 }
+
+# Tear the application down.
+& (Join-Path $scriptDir 'teardown.ps1') -Target 'app' -StackName $StackName
 
 Write-Host "Batch Execution Complete."
