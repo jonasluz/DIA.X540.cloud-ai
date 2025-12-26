@@ -8,10 +8,10 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Define Experiments
 $experiments = @(
-    @{ Name = 'tuned_t3-medium_100u_12i'; Count = 12; Type = 't3.medium'; Users = 100; Duration = '3m' },
-    @{ Name = 'tuned_t3-medium_250u_12i'; Count = 12; Type = 't3.medium'; Users = 250; Duration = '3m' },
-    @{ Name = 'tuned_t3-medium_500u_12i'; Count = 12; Type = 't3.medium'; Users = 500; Duration = '3m' },
-    @{ Name = 'tuned_t3-medium_1000u_12i'; Count = 12; Type = 't3.medium'; Users = 1000; Duration = '3m' }
+    @{ Name = 'tuned_c5-2xlarge_100u_1i'; Count = 1; Type = 'c5.2xlarge'; Users = 100; Duration = '3m' },
+    @{ Name = 'tuned_c5-2xlarge_250u_1i'; Count = 1; Type = 'c5.2xlarge'; Users = 250; Duration = '3m' },
+    @{ Name = 'tuned_c5-2xlarge_500u_1i'; Count = 1; Type = 'c5.2xlarge'; Users = 500; Duration = '3m' },
+    @{ Name = 'tuned_c5-2xlarge_1000u_1i'; Count = 1; Type = 'c5.2xlarge'; Users = 1000; Duration = '3m' }
 )
 
 foreach ($exp in $experiments) {
