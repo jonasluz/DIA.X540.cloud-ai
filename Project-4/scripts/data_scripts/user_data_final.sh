@@ -31,7 +31,7 @@ wp core download --allow-root
 
 
 # O script de deploy substituirá os PLACEHOLDERS pelos valores reais
-wp config create --dbname=wordpress --dbuser=wp_user --dbpass=wp_pass --dbhost=10\.0\.1\.221 --allow-root
+wp config create --dbname=wordpress --dbuser=wp_user --dbpass=wp_pass --dbhost=10\.0\.1\.183 --allow-root
 
 
 # Correção de configuração do Apache para permitir .htaccess
@@ -64,8 +64,8 @@ HTACCESS
 
 
 # Ajuste final de URLs para o Load Balancer
-wp option update home 'http://BenchmarkALB-1439280466\.us-east-1\.elb\.amazonaws\.com' --allow-root
-wp option update siteurl 'http://BenchmarkALB-1439280466\.us-east-1\.elb\.amazonaws\.com' --allow-root
+wp option update home 'http://BenchmarkALB-741881915\.us-east-1\.elb\.amazonaws\.com' --allow-root
+wp option update siteurl 'http://BenchmarkALB-741881915\.us-east-1\.elb\.amazonaws\.com' --allow-root
 chown apache:apache /var/www/html/.htaccess
 chmod 644 /var/www/html/.htaccess
 
