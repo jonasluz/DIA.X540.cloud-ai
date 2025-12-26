@@ -34,7 +34,7 @@
 ### Project #4 - Wordpress in the Cloud Capacity Planning
 
 - **Specification:** [Google Presentation](https://docs.google.com/document/d/13QL64Om-XBFfEqDDyZp8czq-vdWQG-e4mvE3uwRpi-c/edit?tab=t.0#heading=h.qgh1cb786lww)
-- **Submission:** [Submission Report](Project-4/docs/REPORT.md)
+- **Submission:** [Submission Report](Project-4/Project-4.ipynb)
 
 ### Laboratory Activities
 
