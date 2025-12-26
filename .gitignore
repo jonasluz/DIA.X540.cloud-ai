@@ -225,3 +225,5 @@ teste.ogg
 *.pem
 
 Project-4/scripts/.generator_ip
+
+*.csv#
