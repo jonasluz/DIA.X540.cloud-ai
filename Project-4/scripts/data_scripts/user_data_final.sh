@@ -20,8 +20,8 @@ echo "<IfModule mpm_prefork_module>" >> /etc/httpd/conf/httpd.conf
 echo "    StartServers             5" >> /etc/httpd/conf/httpd.conf
 echo "    MinSpareServers          5" >> /etc/httpd/conf/httpd.conf
 echo "    MaxSpareServers         10" >> /etc/httpd/conf/httpd.conf
-echo "    MaxRequestWorkers       50" >> /etc/httpd/conf/httpd.conf
-echo "    ServerLimit             50" >> /etc/httpd/conf/httpd.conf
+echo "    MaxRequestWorkers       100" >> /etc/httpd/conf/httpd.conf
+echo "    ServerLimit             100" >> /etc/httpd/conf/httpd.conf
 echo "</IfModule>" >> /etc/httpd/conf/httpd.conf
 
 
