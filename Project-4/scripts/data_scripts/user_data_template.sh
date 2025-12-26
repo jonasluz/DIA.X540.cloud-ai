@@ -17,11 +17,11 @@ systemctl enable httpd
 # DICA: Adicione aqui comandos de otimização (ex: alterar httpd.conf)
 # Tunning do Apache (Prefork MPM) - Limitando para evitar OOM em t3.micro (1GB RAM)
 echo "<IfModule mpm_prefork_module>" >> /etc/httpd/conf/httpd.conf
-echo "    StartServers             2" >> /etc/httpd/conf/httpd.conf
-echo "    MinSpareServers          2" >> /etc/httpd/conf/httpd.conf
-echo "    MaxSpareServers          5" >> /etc/httpd/conf/httpd.conf
-echo "    MaxRequestWorkers       25" >> /etc/httpd/conf/httpd.conf
-echo "    ServerLimit             25" >> /etc/httpd/conf/httpd.conf
+echo "    StartServers             5" >> /etc/httpd/conf/httpd.conf
+echo "    MinSpareServers          5" >> /etc/httpd/conf/httpd.conf
+echo "    MaxSpareServers         10" >> /etc/httpd/conf/httpd.conf
+echo "    MaxRequestWorkers       50" >> /etc/httpd/conf/httpd.conf
+echo "    ServerLimit             50" >> /etc/httpd/conf/httpd.conf
 echo "</IfModule>" >> /etc/httpd/conf/httpd.conf
 
 
