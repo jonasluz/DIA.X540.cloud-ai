@@ -22,11 +22,11 @@ systemctl enable httpd
 # ServerLimit 60
 cat <<EOF >> /etc/httpd/conf/httpd.conf
 <IfModule mpm_prefork_module>
-    StartServers            10
-    MinSpareServers         10
-    MaxSpareServers         20
-    MaxRequestWorkers      400
-    ServerLimit            400
+    StartServers             2
+    MinSpareServers          2
+    MaxSpareServers          5
+    MaxRequestWorkers        200
+    MaxConnectionsPerChild   3000
 </IfModule>
 EOF
 
@@ -35,14 +35,14 @@ EOF
 # Ajuste para usar memória excedente como cache
 # ----------------------------------------------------------------------
 # Cria arquivo de configuração customizado para o PHP
-cat <<EOF > /etc/php.d/99-tuning.ini
-[opcache]
-opcache.enable=1
-opcache.memory_consumption=256
-opcache.interned_strings_buffer=64
-opcache.max_accelerated_files=10000
-opcache.validate_timestamps=0
-EOF
+# cat <<EOF > /etc/php.d/99-tuning.ini
+# [opcache]
+# opcache.enable=1
+# opcache.memory_consumption=256
+# opcache.interned_strings_buffer=64
+# opcache.max_accelerated_files=10000
+# opcache.validate_timestamps=0
+# EOF
 
 
 # --- 3. INSTALAÇÃO DO WORDPRESS (NÃO ALTERAR ABAIXO) ---
