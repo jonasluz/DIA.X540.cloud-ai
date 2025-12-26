@@ -8,9 +8,8 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Define Experiments
 $experiments = @(
-    @{ Name = 'c5-large_100u_5i'; Count = 5; Type = 'c5.large'; Users = 100; Duration = '3m' },
-    @{ Name = 'c5-xlarge_100u_2i'; Count = 2; Type = 'c5.xlarge'; Users = 100; Duration = '3m' },
-    @{ Name = 'c5-2xlarge_100u_1i'; Count = 1; Type = 'c5.2xlarge'; Users = 100; Duration = '3m' }
+    @{ Name = 'r5-large_100u_3i'; Count = 3; Type = 'r5.large'; Users = 100; Duration = '3m' },
+    @{ Name = 'r5-xlarge_100u_1i'; Count = 1; Type = 'r5.xlarge'; Users = 100; Duration = '3m' }
 )
 
 foreach ($exp in $experiments) {
