@@ -13,16 +13,36 @@ yum install -y httpd git
 systemctl start httpd
 systemctl enable httpd
 
+# ----------------------------------------------------------------------
+# TUNING DO APACHE (MPM Prefork)
+# Ajuste conforme o cenário de hardware (vCPU/RAM)
+# ----------------------------------------------------------------------
+# Exemplo para 2 vCPU / 4GB RAM (Cenário 3 Tuned):
+# MaxRequestWorkers 60 (evita CPU thrashing)
+# ServerLimit 60
+cat <<EOF >> /etc/httpd/conf/httpd.conf
+<IfModule mpm_prefork_module>
+    StartServers             5
+    MinSpareServers          5
+    MaxSpareServers         10
+    MaxRequestWorkers       60
+    ServerLimit             60
+</IfModule>
+EOF
 
-# DICA: Adicione aqui comandos de otimização (ex: alterar httpd.conf)
-# Tunning do Apache (Prefork MPM) - Limitando para evitar OOM em t3.micro (1GB RAM)
-echo "<IfModule mpm_prefork_module>" >> /etc/httpd/conf/httpd.conf
-echo "    StartServers             5" >> /etc/httpd/conf/httpd.conf
-echo "    MinSpareServers          5" >> /etc/httpd/conf/httpd.conf
-echo "    MaxSpareServers         10" >> /etc/httpd/conf/httpd.conf
-echo "    MaxRequestWorkers       100" >> /etc/httpd/conf/httpd.conf
-echo "    ServerLimit             100" >> /etc/httpd/conf/httpd.conf
-echo "</IfModule>" >> /etc/httpd/conf/httpd.conf
+# ----------------------------------------------------------------------
+# TUNING DO PHP (OPcache)
+# Ajuste para usar memória excedente como cache
+# ----------------------------------------------------------------------
+# Cria arquivo de configuração customizado para o PHP
+# cat <<EOF > /etc/php.d/99-tuning.ini
+# [opcache]
+# opcache.enable=1
+# opcache.memory_consumption=512
+# opcache.interned_strings_buffer=64
+# opcache.max_accelerated_files=20000
+# opcache.validate_timestamps=0
+# EOF
 
 
 # --- 3. INSTALAÇÃO DO WORDPRESS (NÃO ALTERAR ABAIXO) ---
@@ -76,8 +96,5 @@ chmod 644 /var/www/html/.htaccess
 
 
 systemctl restart httpd
-
-
-
 
 
