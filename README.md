@@ -19,7 +19,7 @@
 ### Project #1 - Cloud AI services Curation
 
 - **Specification:** [Google Presentation](https://docs.google.com/presentation/d/1CNVGaqt9A0LendPfvajjTUio21lKZqPOUQUW3_3O0gU/edit?usp=sharing)
-- **Submission:** [Excel spreadsheet](https://github.com/jonasluz/DIA.X540.cloud-ai/raw/refs/heads/main/Project%231/Catalogo%20de%20Servi%C3%A7os%20em%20Cloud_Trabalho-1_25-09-2025.xlsx)
+- **Submission:** [Excel spreadsheet](https://github.com/jonasluz/DIA.X540.cloud-ai/raw/refs/heads/main/Project-1/Catalogo%20de%20Servi%C3%A7os%20em%20Cloud_Trabalho-1_25-09-2025.xlsx)
 
 ### Project #2 - Selected Cloud Service Comparison
 
